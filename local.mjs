@@ -1,26 +1,6 @@
 import http from "node:http";
-import { DatabaseSync } from "node:sqlite";
 import { readFile } from "node:fs/promises";
 import { handle } from "./game/api.mjs";
-const sql = new DatabaseSync(process.env.GAME_DB || "matches.sqlite");
-const db = {
-  prepare(query) {
-    let args = [];
-    const stmt = sql.prepare(query);
-    return {
-      bind(...values) {
-        args = values;
-        return this;
-      },
-      first() {
-        return stmt.get(...args);
-      },
-      run() {
-        return { meta: stmt.run(...args) };
-      },
-    };
-  },
-};
 const assets = new Map([
   ["/", ["index.html", "text/html"]],
   ["/duel/game.js", ["public/duel/game.js", "text/javascript"]],
@@ -49,7 +29,6 @@ http
             headers: req.headers,
             ...(req.method === "POST" ? { body: Buffer.concat(chunks) } : {}),
           }),
-          db,
         );
         res.writeHead(r.status, Object.fromEntries(r.headers));
         res.end(Buffer.from(await r.arrayBuffer()));

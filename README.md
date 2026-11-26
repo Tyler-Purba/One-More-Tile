@@ -4,14 +4,14 @@ A photo guessing game for two people sharing one screen. The coin winner picks t
 
 ## Run on your computer
 
-Use Node 24 and npm 11.6 or later. From the extracted project folder, run `node local.mjs` and open http://localhost:4173. This mode needs no package installation. Run `node checks/flow.mjs` for a complete scripted match against a disposable local database.
+Use Node 24 and npm 11.6 or later. From the extracted project folder, run `node local.mjs` and open http://localhost:4173. This mode needs no package installation. Run `node checks/flow.mjs` for a complete scripted match against the local server.
 
 ## How it works
 
 - `public/duel/game.js` draws the board, flips the coin, enforces the turn sequence and counts points. Refreshing starts over.
-- `game/api.mjs` creates a private three-photo deck, returns a single requested tile, and checks guesses against accepted aliases. It sends the full image and credit link after a correct guess.
+- `game/api.mjs` selects three distinct photos using the match ID as a seed, returns a single requested tile, and checks guesses against accepted aliases. It sends the full image and credit link after a correct guess.
 - `game/photos.json` contains ten pre-cut photos and the accepted answers. It is bundled with the worker. See PHOTOS.md for the sources.
-- `worker.ts` connects the puzzle API to DeepSpace's worker and managed D1 binding. D1 stores the shuffled deck under a random ID so successive requests can use the same photos. `local.mjs` implements the same contract with SQLite for local development.
+- `worker.ts` connects the puzzle API to the DeepSpace worker. Each request uses the match ID to reproduce the same three-photo draw from the server-side deck. This requires no database binding. `local.mjs` serves the same handler locally.
 
 Both players share a device, so turn and score changes stay in the browser. This is a casual game: a determined client can request extra tiles. Round secrecy here means the normal page receives only the clues requested and the server keeps the answer list. There is no account setup, invite link, or external photo API at play time.
 

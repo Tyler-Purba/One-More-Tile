@@ -84,7 +84,6 @@ export class AppJobRoom extends JobRoom<Env> {
 }
 
 export interface Env extends DOBindings<typeof __DO_MANIFEST__> {
-  MATCHES: D1Database
   ASSETS: Fetcher
   /**
    * Platform service binding in production; deepspace dev supplies the URL
@@ -136,8 +135,8 @@ app.use('*', async (c, next) => {
 
 // Registration order is part of the worker contract. The wildcard auth route
 // follows its special cases, AI precedes platform proxies, and static is last.
-app.all('/api/puzzles', c => handle(c.req.raw, c.env.MATCHES))
-app.all('/api/puzzles/:id/:action', c => handle(c.req.raw, c.env.MATCHES))
+app.all('/api/puzzles', c => handle(c.req.raw))
+app.all('/api/puzzles/:id/:action', c => handle(c.req.raw))
 registerAuthAndIntegrationRoutes(app)
 registerRealtimeRoutes(app)
 registerActionRoutes(app, resolveAuth)

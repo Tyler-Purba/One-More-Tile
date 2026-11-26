@@ -6,25 +6,28 @@ const reply = (body, status = 200) => Response.json(body, {
 const normalize = text => text.toLowerCase().replace(/[^a-z0-9 ]/g, ' ')
   .trim().replace(/^(a|an|the) +/, '').replace(/ +/g, ' ');
 
-export async function handle(request, db) {
+// A match ID is a seed. Every worker can reproduce its three distinct photos.
+async function photoForRound(id, round) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(id));
+  const words = new DataView(digest);
+  const remaining = [...photos];
+  for (let i = 0; i <= round; i++) {
+    const position = words.getUint32(i * 4) % remaining.length;
+    const [photo] = remaining.splice(position, 1);
+    if (i === round) return photo;
+  }
+}
+
+export async function handle(request) {
   if (request.method !== 'POST') return reply({error:'Use POST.'},405);
   const path = new URL(request.url).pathname;
-  await db.prepare('CREATE TABLE IF NOT EXISTS puzzle_decks (id TEXT PRIMARY KEY, deck TEXT NOT NULL)').run();
-  if (path === '/api/puzzles') {
-    const bag = photos.map((_, index) => index);
-    const deck = [4,8,16].map(() => bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
-    const id = crypto.randomUUID();
-    await db.prepare('INSERT INTO puzzle_decks VALUES (?,?)').bind(id,JSON.stringify(deck)).run();
-    return reply({id},201);
-  }
+  if (path === '/api/puzzles') return reply({id:crypto.randomUUID()},201);
   const route = path.match(/^\/api\/puzzles\/([a-f0-9-]{36})\/(tile|guess)$/);
   if (!route) return reply({error:'Unknown puzzle.'},404);
   let body;
   try { body = await request.json(); } catch { return reply({error:'Invalid request.'},400); }
   if (![0,1,2].includes(body?.round)) return reply({error:'Invalid round.'},400);
-  const row = await db.prepare('SELECT deck FROM puzzle_decks WHERE id=?').bind(route[1]).first();
-  if (!row) return reply({error:'Game not found. Start a new match.'},404);
-  const photo = photos[JSON.parse(row.deck)[body.round]];
+  const photo = await photoForRound(route[1],body.round);
   if (route[2] === 'tile') {
     const grid = photo.grids[4 << body.round];
     if (!Number.isInteger(body.tile) || body.tile < 0 || body.tile >= grid.length)

@@ -1,4 +1,4 @@
-// Runs the complete shared-screen flow against a disposable local database.
+// Runs the complete shared-screen flow against a disposable local server.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -6,7 +6,7 @@ import photos from '../game/photos.json' with {type:'json'};
 
 const port=process.env.TEST_PORT || 4398;
 const url='http://127.0.0.1:'+port;
-const server=spawn(process.execPath,['local.mjs'],{env:{...process.env,PORT:String(port),GAME_DB:':memory:'},stdio:['ignore','pipe','inherit']});
+const server=spawn(process.execPath,['local.mjs'],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','inherit']});
 let browser;
 try {
   await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('exit',()=>reject(Error('Local server failed to start')));});

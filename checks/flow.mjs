@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import photos from '../game/photos.json' with {type:'json'};
 const port=process.env.TEST_PORT || 4399, origin='http://127.0.0.1:'+port;
-const server=spawn(process.execPath,['local.mjs'],{env:{...process.env,PORT:String(port),GAME_DB:':memory:'},stdio:['ignore','pipe','inherit']});
+const server=spawn(process.execPath,['local.mjs'],{env:{...process.env,PORT:String(port)},stdio:['ignore','pipe','inherit']});
 try{
  await new Promise((resolve,reject)=>{server.stdout.once('data',resolve);server.once('exit',()=>reject(Error('Server exited')));});
  const calls={}, page={innerHTML:'',addEventListener:(event,fn)=>calls[event]=fn},notice={},input={value:''};
